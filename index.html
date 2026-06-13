@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Text Converter Pro v9.2 - Polished Edition</title>
+    <title>Text Converter Pro</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
     <meta name="theme-color" content="#0f172a">
     
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
@@ -220,7 +221,7 @@
 
 <div class="container">
     <div class="header-wrap">
-        <h1>Text Converter <span style="font-size: 1rem; color: var(--text-muted); font-weight: 500;">v9.2</span></h1>
+        <h1>Text Converter <span style="font-size: 1rem; color: var(--text-muted); font-weight: 500;">v9.3</span></h1>
         <button class="icon-btn" onclick="toggleTheme()" id="themeToggle">☀️ Light Mode</button>
     </div>
     
@@ -243,6 +244,7 @@
             <button class="tool-btn special-btn" id="btnTransIDEN" onclick="translateText('id|en')">ID ➔ EN Translate</button>
             <button class="tool-btn special-btn" id="btnTransENID" onclick="translateText('en|id')">EN ➔ ID Translate</button>
             <button class="tool-btn" onclick="speakText()">🔊 Dengarkan Teks</button>
+            <button class="tool-btn" id="btnDictation" onclick="startDictation()">🎙️ Dikte Suara</button>
         </div>
     </div>
 
@@ -252,6 +254,7 @@
             <button class="tool-btn" onclick="processText('extLinks')">🔗 Ambil Link</button>
             <button class="tool-btn" onclick="processText('extEmails')">📧 Ambil Email</button>
             <button class="tool-btn" onclick="processText('extHashtags')">#️⃣ Ambil Hashtag</button>
+            <button class="tool-btn" onclick="processText('extMentions')">🏷️ Ambil Mention (@)</button>
             <button class="tool-btn" onclick="processText('extNumbers')">🔢 Ambil Angka</button>
         </div>
     </div>
@@ -319,13 +322,53 @@
         }
     }
 
-    // Text to Speech
+    // Text to Speech (Membacakan Teks)
     function speakText() {
         if (!input.value) return;
         window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(input.value);
         utterance.lang = 'id-ID';
         window.speechSynthesis.speak(utterance);
+    }
+
+    // --- FITUR BARU: Speech to Text (Dikte Suara) ---
+    function startDictation() {
+        const btn = document.getElementById('btnDictation');
+        
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const recognition = new SpeechRecognition();
+            
+            recognition.lang = 'id-ID'; // Bahasa Indonesia
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            
+            const originalText = btn.innerText;
+            btn.innerText = "🔴 Mendengarkan...";
+            btn.style.color = "#ef4444";
+            btn.style.borderColor = "#ef4444";
+            
+            recognition.start();
+            
+            recognition.onresult = function(event) {
+                const transcript = event.results[0][0].transcript;
+                // Gabungkan dengan teks yang sudah ada
+                input.value = input.value ? input.value + ' ' + transcript : transcript;
+                input.dispatchEvent(new Event('input')); // Memicu auto-save
+            };
+            
+            recognition.onerror = function(event) {
+                alert("Gagal mendengarkan. Pastikan mikrofon diizinkan di browser Anda.");
+            };
+            
+            recognition.onend = function() {
+                btn.innerText = originalText;
+                btn.style.color = "";
+                btn.style.borderColor = "";
+            };
+        } else {
+            alert("Browser Anda tidak mendukung Dikte Suara. Gunakan Google Chrome versi terbaru.");
+        }
     }
 
     // Export to PDF (Multi-page Support)
@@ -441,7 +484,6 @@
                 case 'title': txt = txt.replace(/\w\S*/g, (w) => w.replace(/^\w/, (c) => c.toUpperCase())); break;
                 case 'clean': txt = txt.replace(/\s+/g, ' ').trim(); break;
                 case 'removeSymbols': 
-                    // Menghapus segala sesuatu kecuali huruf (semua bahasa), angka, dan spasi
                     txt = txt.replace(/[^\p{L}\p{N}\s]/gu, ''); 
                     break;
                 
@@ -456,6 +498,11 @@
                 case 'extHashtags':
                     const hashtags = txt.match(/#[a-zA-Z0-9_]+/gi);
                     txt = hashtags ? [...new Set(hashtags)].join('\n') : "Tidak ada hashtag ditemukan.";
+                    break;
+                // --- FITUR BARU: Ambil Mention (@) ---
+                case 'extMentions':
+                    const mentions = txt.match(/@[a-zA-Z0-9_]+/gi);
+                    txt = mentions ? [...new Set(mentions)].join('\n') : "Tidak ada mention (@) ditemukan.";
                     break;
                 case 'extNumbers':
                     const numbers = txt.match(/\d+/g);
