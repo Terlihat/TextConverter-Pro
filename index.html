@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Text Converter Pro</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
     <meta name="theme-color" content="#0f172a">
     
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
@@ -38,7 +39,6 @@
             --btn-ocr: #7c3aed;
         }
 
-        /* Animasi Masuk */
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
@@ -119,14 +119,26 @@
 
         textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15); }
 
+        .stats-wrap {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+        }
+
         .stats {
             display: flex;
-            justify-content: flex-start;
             gap: 20px;
             font-size: 0.85rem;
             color: var(--text-muted);
             font-weight: 500;
-            margin-top: 10px;
+        }
+        
+        #saveIndicator {
+            font-size: 0.8rem;
+            color: #10b981;
+            opacity: 0;
+            transition: opacity 0.3s;
         }
 
         .category-container { margin-top: 25px; }
@@ -194,7 +206,7 @@
         .btn-pdf:hover { background: #b91c1c; box-shadow: 0 10px 15px -3px rgba(239, 68, 68, 0.3); }
 
         .btn-clear { background: var(--container-bg); border: 2px solid var(--border-color); color: var(--text-main); flex: 0.5;}
-        .btn-clear:hover { background: var(--border-color); }
+        .btn-clear:hover { background: var(--border-color); color: #ef4444; border-color: #ef4444;}
 
         #imageInput { display: none; }
 
@@ -209,15 +221,18 @@
 
 <div class="container">
     <div class="header-wrap">
-        <h1>Text Converter <span style="font-size: 1rem; color: var(--text-muted); font-weight: 500;">v9.0 Final</span></h1>
+        <h1>Text Converter <span style="font-size: 1rem; color: var(--text-muted); font-weight: 500;">v9.1</span></h1>
         <button class="icon-btn" onclick="toggleTheme()" id="themeToggle">☀️ Light Mode</button>
     </div>
     
     <textarea id="inputText" placeholder="Ketik, tempel teks, atau gunakan alat ajaib di bawah..."></textarea>
     
-    <div class="stats">
-        <span id="charCount">0 Karakter</span>
-        <span id="wordCount">0 Kata</span>
+    <div class="stats-wrap">
+        <div class="stats">
+            <span id="charCount">0 Karakter</span>
+            <span id="wordCount">0 Kata</span>
+        </div>
+        <span id="saveIndicator">✓ Tersimpan otomatis</span>
     </div>
 
     <input type="file" id="imageInput" accept="image/png, image/jpeg, image/jpg" onchange="runOCR(event)">
@@ -253,7 +268,7 @@
     </div>
 
     <div class="action-buttons">
-        <button class="btn-main btn-copy" onclick="copyText()">📋 Salin Teks</button>
+        <button class="btn-main btn-copy" onclick="copyText()" id="btnCopy">📋 Salin Teks</button>
         <button class="btn-main btn-pdf" onclick="exportToPDF()">📄 Simpan PDF</button>
         <button class="btn-main btn-clear" onclick="clearAll()">🗑️ Hapus</button>
     </div>
@@ -262,9 +277,31 @@
 <script>
     const input = document.getElementById('inputText');
     const themeBtn = document.getElementById('themeToggle');
+    const saveIndicator = document.getElementById('saveIndicator');
+    let saveTimeout;
 
-    // Live Stats
-    input.addEventListener('input', updateStats);
+    // --- FITUR BARU: Auto-Save Recovery ---
+    window.onload = () => {
+        const savedText = localStorage.getItem('textConverterDraft');
+        if (savedText) {
+            input.value = savedText;
+            updateStats();
+        }
+    };
+
+    // Live Stats & Auto-Save Trigger
+    input.addEventListener('input', () => {
+        updateStats();
+        
+        // Simpan ke local storage dengan debounce agar tidak memberatkan browser
+        clearTimeout(saveTimeout);
+        saveTimeout = setTimeout(() => {
+            localStorage.setItem('textConverterDraft', input.value);
+            saveIndicator.style.opacity = '1';
+            setTimeout(() => saveIndicator.style.opacity = '0', 2000);
+        }, 800);
+    });
+
     function updateStats() {
         const val = input.value;
         document.getElementById('charCount').innerText = `${val.length} Karakter`;
@@ -292,7 +329,7 @@
         window.speechSynthesis.speak(utterance);
     }
 
-    // Export to PDF using jsPDF
+    // --- BUG FIX: Export to PDF (Multi-page Support) ---
     function exportToPDF() {
         const text = input.value.trim();
         if (!text) {
@@ -303,12 +340,20 @@
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
         
-        // Memecah teks agar tidak melewati batas margin halaman
-        const splitText = doc.splitTextToSize(text, 180);
-        
         doc.setFont("helvetica", "normal");
         doc.setFontSize(12);
-        doc.text(splitText, 15, 20); // x: 15, y: 20
+        
+        const splitText = doc.splitTextToSize(text, 180);
+        let yPos = 20;
+        
+        for (let i = 0; i < splitText.length; i++) {
+            if (yPos > 280) { // Jika melewati batas bawah kertas (A4 tinggi 297mm)
+                doc.addPage();
+                yPos = 20; // Reset ke atas
+            }
+            doc.text(splitText[i], 15, yPos);
+            yPos += 7; // Jarak antar baris
+        }
         
         doc.save("TextConverterPro.pdf");
     }
@@ -317,6 +362,12 @@
     function runOCR(event) {
         const file = event.target.files[0];
         if (!file) return;
+
+        if (!navigator.onLine) {
+            alert("Fitur OCR membutuhkan koneksi internet untuk mengunduh AI.");
+            event.target.value = '';
+            return;
+        }
 
         const btnOCR = document.getElementById('btnOCR');
         btnOCR.disabled = true;
@@ -331,7 +382,7 @@
             } 
         }).then(({ data: { text } }) => {
             input.value = input.value ? input.value + '\n\n' + text : text;
-            updateStats();
+            input.dispatchEvent(new Event('input')); // Memicu auto-save & stats
             btnOCR.innerText = "✅ Berhasil!";
             setTimeout(() => {
                 btnOCR.innerText = "📷 Ekstrak dari Foto";
@@ -339,7 +390,7 @@
             }, 2000);
             event.target.value = ''; 
         }).catch(err => {
-            alert("Gagal membaca gambar.");
+            alert("Gagal membaca gambar. Pastikan gambar jelas.");
             btnOCR.innerText = "📷 Ekstrak dari Foto";
             btnOCR.disabled = false;
             event.target.value = '';
@@ -351,6 +402,11 @@
         const txt = input.value.trim();
         if(!txt) return;
         
+        if (!navigator.onLine) {
+            alert("Koneksi internet diperlukan untuk menerjemahkan.");
+            return;
+        }
+
         const btnId = langPair === 'id|en' ? 'btnTransIDEN' : 'btnTransENID';
         const btn = document.getElementById(btnId);
         const originalText = btn.innerText;
@@ -363,12 +419,12 @@
             const data = await response.json();
             if(data.responseData && data.responseData.translatedText) {
                 input.value = data.responseData.translatedText;
-                updateStats();
+                input.dispatchEvent(new Event('input')); // Memicu auto-save
             } else {
                 alert("Gagal mendapatkan terjemahan.");
             }
         } catch (error) {
-            alert("Koneksi internet diperlukan untuk menerjemahkan.");
+            alert("Terjadi kesalahan jaringan.");
         }
         btn.innerText = originalText;
         btn.disabled = false;
@@ -404,24 +460,36 @@
                     break;
             }
             input.value = txt;
-            updateStats();
+            input.dispatchEvent(new Event('input')); // Memicu auto-save
         } catch (e) {
             alert("Terjadi kesalahan sistem.");
         }
     }
 
-    function copyText() {
-        if (!input.value) return;
-        input.select();
-        document.execCommand('copy');
-        const btn = document.querySelector('.btn-copy');
-        btn.innerHTML = "✅ Tersalin!";
+    // --- BUG FIX: Salin Teks menggunakan Clipboard API ---
+    async function copyText() {
+        const textToCopy = input.value;
+        if (!textToCopy) return;
+        
+        const btn = document.getElementById('btnCopy');
+        
+        try {
+            await navigator.clipboard.writeText(textToCopy);
+            btn.innerHTML = "✅ Tersalin!";
+        } catch (err) {
+            // Fallback jika API Clipboard terblokir (misal di beberapa browser lawas)
+            input.select();
+            document.execCommand('copy');
+            btn.innerHTML = "✅ Tersalin!";
+        }
+
         setTimeout(() => btn.innerHTML = "📋 Salin Teks", 2000);
     }
 
     function clearAll() {
         if(confirm("Apakah Anda yakin ingin menghapus semua teks?")) {
             input.value = "";
+            localStorage.removeItem('textConverterDraft'); // Hapus draft
             updateStats();
             window.speechSynthesis.cancel();
         }
