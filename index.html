@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Modern Text Converter v2.0</title>
+    <title>Modern Text Converter v3.0</title>
     <style>
         :root {
             /* Tema Gelap (Default) */
@@ -113,25 +113,34 @@
             font-size: 0.85rem;
             color: var(--text-muted);
             margin-top: 8px;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
+        }
+
+        .category-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-top: 20px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
         }
 
         .button-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 12px;
-            margin-bottom: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 10px;
         }
 
         button {
             background-color: var(--btn-bg);
             color: var(--text-main);
             border: 1px solid var(--border-color);
-            padding: 12px 15px;
+            padding: 10px 12px;
             border-radius: 8px;
             cursor: pointer;
             font-weight: 600;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             transition: all 0.2s ease;
         }
 
@@ -151,10 +160,10 @@
             gap: 10px;
             border-top: 1px solid var(--border-color);
             padding-top: 20px;
-            margin-top: 10px;
+            margin-top: 25px;
         }
 
-        .btn-copy { background-color: #10b981; border-color: #10b981; color: white;}
+        .btn-copy { background-color: #10b981; border-color: #10b981; color: white; flex: 1;}
         .btn-copy:hover { background-color: #059669; border-color: #059669; }
         
         .btn-clear { background-color: #ef4444; border-color: #ef4444; color: white;}
@@ -166,7 +175,7 @@
 
 <div class="container">
     <div class="header-wrap">
-        <h1>Text Converter Pro <span style="font-size: 1rem; color: var(--text-muted);">- v2.0</span></h1>
+        <h1>Text Converter Pro <span style="font-size: 1rem; color: var(--text-muted);">- v3.0</span></h1>
         <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">☀️ Light Mode</button>
     </div>
     
@@ -177,21 +186,33 @@
         <span id="wordCount">Kata: 0</span>
     </div>
 
+    <div class="category-title">📝 Ubah Huruf (Case Conversion)</div>
     <div class="button-grid">
         <button onclick="convertText('upper')">UPPERCASE</button>
         <button onclick="convertText('lower')">lowercase</button>
         <button onclick="convertText('title')">Title Case</button>
         <button onclick="convertText('sentence')">Sentence case</button>
         <button onclick="convertText('reverse')">esreveR</button>
+    </div>
+
+    <div class="category-title">🔐 Encode & Decode</div>
+    <div class="button-grid">
         <button onclick="convertText('base64Encode')">Base64 Encode</button>
         <button onclick="convertText('base64Decode')">Base64 Decode</button>
         <button onclick="convertText('binaryEncode')">Text to Binary</button>
         <button onclick="convertText('binaryDecode')">Binary to Text</button>
     </div>
 
+    <div class="category-title">🛠️ Utilitas Ekstra</div>
+    <div class="button-grid">
+        <button onclick="convertText('removeSpaces')">🧹 Hapus Spasi Ganda</button>
+        <button onclick="convertText('slugify')">🔗 Buat URL Slug</button>
+        <button onclick="speakText()">🔊 Dengarkan Teks</button>
+    </div>
+
     <div class="action-buttons">
-        <button class="btn-copy" onclick="copyText()">📋 Salin Teks</button>
-        <button class="btn-clear" onclick="clearText()">🗑️ Hapus</button>
+        <button class="btn-copy" onclick="copyText()">📋 Salin Teks ke Clipboard</button>
+        <button class="btn-clear" onclick="clearText()">🗑️ Kosongkan</button>
     </div>
 </div>
 
@@ -221,6 +242,17 @@
         }
     }
 
+    // Text to Speech
+    function speakText() {
+        const text = inputEl.value;
+        if (!text) return;
+        
+        window.speechSynthesis.cancel(); // Stop any ongoing speech
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'id-ID'; // Set bahasa Indonesia
+        window.speechSynthesis.speak(utterance);
+    }
+
     // Text Conversion Logic
     function convertText(type) {
         let text = inputEl.value;
@@ -243,27 +275,30 @@
                 text = text.split('').reverse().join('');
                 break;
             case 'base64Encode':
-                try { text = btoa(text); } catch(e) { alert("Teks tidak dapat di-encode ke Base64 (hindari karakter non-latin khusus tanpa formatting yang tepat)."); }
+                try { text = btoa(text); } catch(e) { alert("Hindari karakter khusus non-latin untuk Base64."); }
                 break;
             case 'base64Decode':
                 try { text = atob(text); } catch(e) { alert("Format Base64 tidak valid."); }
                 break;
             case 'binaryEncode':
-                text = text.split('').map(char => {
-                    return char.charCodeAt(0).toString(2).padStart(8, '0');
-                }).join(' ');
+                text = text.split('').map(char => char.charCodeAt(0).toString(2).padStart(8, '0')).join(' ');
                 break;
             case 'binaryDecode':
                 try {
-                    // Membersihkan spasi berlebih
                     const binaryArr = text.trim().split(/\s+/);
                     text = binaryArr.map(bin => {
-                        if(!/^[01]+$/.test(bin)) throw new Error("Not Binary");
+                        if(!/^[01]+$/.test(bin)) throw new Error();
                         return String.fromCharCode(parseInt(bin, 2));
                     }).join('');
                 } catch(e) { 
-                    alert("Format biner tidak valid. Pastikan hanya berisi angka 0 dan 1 yang dipisahkan spasi."); 
+                    alert("Format biner tidak valid."); 
                 }
+                break;
+            case 'removeSpaces':
+                text = text.replace(/\s+/g, ' ').trim();
+                break;
+            case 'slugify':
+                text = text.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-');
                 break;
         }
         
@@ -277,7 +312,6 @@
         inputEl.select();
         document.execCommand('copy');
         
-        // Simple visual feedback
         const btn = document.querySelector('.btn-copy');
         const originalText = btn.innerHTML;
         btn.innerHTML = '✅ Tersalin!';
@@ -288,6 +322,7 @@
     function clearText() {
         inputEl.value = '';
         inputEl.dispatchEvent(new Event('input'));
+        window.speechSynthesis.cancel(); // Matikan suara jika sedang bicara
     }
 </script>
 
