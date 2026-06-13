@@ -3,7 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Modern Text Converter v4.0</title>
+    <title>Text Converter Pro v5.0 - PWA Edition</title>
+    <meta name="theme-color" content="#0f172a">
+    <meta name="description" content="Aplikasi konversi teks profesional terlengkap.">
+    <link rel="manifest" href="data:application/json;base64,ewogICJnameIjogIlRleHQgQ29udmVydGVyIFBybyIsCiAgInNob3J0X25hbWUiOiAiVGV4dENvbnYiLAogICJzdGFydF91cmwiOiAiLiIsCiAgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsCiAgImJhY2tncm91bmRfY29sb3IiOiAiIzBmMTcyYSIsCiAgInRoZW1lX2NvbG9yIjogIiMzYjgyZjYiCn0=">
+
     <style>
         :root {
             /* Tema Gelap (Default) */
@@ -15,7 +19,8 @@
             --accent-hover: #2563eb;
             --border-color: #334155;
             --btn-bg: #1e293b;
-            --btn-special: #4f46e5;
+            --btn-special: #8b5cf6;
+            --btn-download: #f59e0b;
         }
 
         [data-theme="light"] {
@@ -28,12 +33,14 @@
             --accent-hover: #2563eb;
             --border-color: #cbd5e1;
             --btn-bg: #f8fafc;
-            --btn-special: #6366f1;
+            --btn-special: #a855f7;
+            --btn-download: #d97706;
         }
 
         body {
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
             background-color: var(--bg-color);
+            background-image: radial-gradient(circle at top right, rgba(59, 130, 246, 0.1), transparent);
             color: var(--text-main);
             display: flex;
             justify-content: center;
@@ -42,18 +49,18 @@
             margin: 0;
             padding: 20px;
             box-sizing: border-box;
-            transition: background-color 0.3s ease, color 0.3s ease;
+            transition: all 0.3s ease;
         }
 
         .container {
             background-color: var(--container-bg);
             width: 100%;
-            max-width: 850px;
+            max-width: 900px;
             padding: 30px;
-            border-radius: 16px;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
             border: 1px solid var(--border-color);
-            transition: background-color 0.3s ease, border-color 0.3s ease;
+            position: relative;
         }
 
         .header-wrap {
@@ -65,314 +72,308 @@
 
         h1 {
             margin: 0;
-            background: linear-gradient(to right, #60a5fa, #a78bfa);
+            background: linear-gradient(135deg, #60a5fa, #c084fc);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            font-size: 2.2rem;
+            font-size: 2rem;
+            font-weight: 800;
         }
 
-        .theme-toggle {
-            background: none;
+        .top-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .icon-btn {
+            background: var(--btn-bg);
             border: 1px solid var(--border-color);
             color: var(--text-main);
-            padding: 8px 12px;
-            border-radius: 20px;
+            padding: 10px 15px;
+            border-radius: 12px;
             cursor: pointer;
             font-size: 0.9rem;
             display: flex;
             align-items: center;
-            gap: 5px;
-            transition: all 0.3s ease;
+            gap: 8px;
+            transition: 0.3s;
         }
 
-        .theme-toggle:hover {
-            background-color: var(--border-color);
-        }
+        .icon-btn:hover { background-color: var(--border-color); }
 
         textarea {
             width: 100%;
-            height: 200px;
-            background-color: var(--bg-color);
+            height: 220px;
+            background-color: rgba(15, 23, 42, 0.5);
             color: var(--text-main);
             border: 1px solid var(--border-color);
-            border-radius: 10px;
-            padding: 15px;
-            font-size: 1rem;
+            border-radius: 16px;
+            padding: 20px;
+            font-size: 1.05rem;
             resize: vertical;
             box-sizing: border-box;
             outline: none;
-            transition: border-color 0.3s ease, background-color 0.3s ease, color 0.3s ease;
+            transition: 0.3s;
+            line-height: 1.6;
         }
 
-        textarea:focus {
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
-        }
+        textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); }
 
         .stats {
             display: flex;
-            justify-content: space-between;
+            justify-content: flex-start;
+            gap: 20px;
             font-size: 0.85rem;
             color: var(--text-muted);
-            margin-top: 8px;
-            margin-bottom: 10px;
+            margin-top: 10px;
+            font-weight: 500;
         }
 
-        .category-title {
-            font-size: 0.95rem;
-            font-weight: 600;
-            color: var(--text-muted);
-            margin-top: 20px;
-            margin-bottom: 10px;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 5px;
-        }
-
-        .button-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
-            gap: 10px;
-        }
-
-        button {
-            background-color: var(--btn-bg);
-            color: var(--text-main);
-            border: 1px solid var(--border-color);
-            padding: 10px 12px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 0.85rem;
-            transition: all 0.2s ease;
-        }
-
-        button:hover {
-            background-color: var(--accent);
-            border-color: var(--accent);
-            color: #ffffff;
-            transform: translateY(-2px);
-        }
-
-        button:active {
-            transform: translateY(0);
-        }
-        
-        .btn-special {
-            background-color: rgba(99, 102, 241, 0.1);
-            color: var(--btn-special);
-            border-color: var(--btn-special);
-        }
-        .btn-special:hover {
-            background-color: var(--btn-special);
-            color: white;
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 10px;
-            border-top: 1px solid var(--border-color);
-            padding-top: 20px;
+        .category-container {
             margin-top: 25px;
         }
 
-        .btn-copy { background-color: #10b981; border-color: #10b981; color: white; flex: 1;}
-        .btn-copy:hover { background-color: #059669; border-color: #059669; }
-        
-        .btn-clear { background-color: #ef4444; border-color: #ef4444; color: white;}
-        .btn-clear:hover { background-color: #dc2626; border-color: #dc2626; }
+        .category-title {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .category-title::after { content: ""; flex: 1; height: 1px; background: var(--border-color); }
 
+        .button-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 10px;
+        }
+
+        button.tool-btn {
+            background-color: var(--btn-bg);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 12px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: 0.2s;
+            text-align: center;
+        }
+
+        button.tool-btn:hover {
+            background-color: var(--accent);
+            border-color: var(--accent);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .special-btn { border-color: var(--btn-special) !important; color: var(--btn-special) !important; }
+        .special-btn:hover { background: var(--btn-special) !important; color: white !important; }
+
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid var(--border-color);
+        }
+
+        .btn-main { padding: 15px 25px; border-radius: 14px; font-weight: 700; flex: 1; border: none; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-copy { background: var(--accent); color: white; }
+        .btn-copy:hover { background: var(--accent-hover); box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.3); }
+        
+        .btn-download { background: var(--btn-download); color: white; }
+        .btn-clear { background: #ef4444; color: white; flex: 0.3; }
+
+        /* Mobile Responsive */
+        @media (max-width: 600px) {
+            .button-grid { grid-template-columns: 1fr 1fr; }
+            .header-wrap { flex-direction: column; gap: 15px; align-items: flex-start; }
+            .action-buttons { flex-direction: column; }
+            .btn-clear { flex: 1; }
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="header-wrap">
-        <h1>Text Converter Pro <span style="font-size: 1rem; color: var(--text-muted);">- v4.0 Ultimate</span></h1>
-        <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">☀️ Light Mode</button>
+        <h1>Text Converter Pro <span style="font-size: 0.9rem; opacity: 0.6;">v5.0</span></h1>
+        <div class="top-controls">
+            <button class="icon-btn" id="installBtn" style="display:none;" onclick="installPWA()">📲 Install</button>
+            <button class="icon-btn" onclick="toggleTheme()" id="themeToggle">☀️ Light</button>
+        </div>
     </div>
     
-    <textarea id="inputText" placeholder="Ketik atau paste teks Anda di sini..."></textarea>
+    <textarea id="inputText" placeholder="Mulai mengetik atau tempel teks di sini..."></textarea>
     
     <div class="stats">
-        <span id="charCount">Karakter: 0</span>
-        <span id="wordCount">Kata: 0</span>
+        <span id="charCount">0 Karakter</span>
+        <span id="wordCount">0 Kata</span>
+        <span id="lineCount">0 Baris</span>
     </div>
 
-    <div class="category-title">📝 Ubah Huruf (Case)</div>
-    <div class="button-grid">
-        <button onclick="convertText('upper')">UPPERCASE</button>
-        <button onclick="convertText('lower')">lowercase</button>
-        <button onclick="convertText('title')">Title Case</button>
-        <button onclick="convertText('sentence')">Sentence case</button>
-        <button onclick="convertText('reverse')">esreveR</button>
+    <div class="category-container">
+        <div class="category-title">Format Huruf</div>
+        <div class="button-grid">
+            <button class="tool-btn" onclick="processText('upper')">UPPERCASE</button>
+            <button class="tool-btn" onclick="processText('lower')">lowercase</button>
+            <button class="tool-btn" onclick="processText('title')">Title Case</button>
+            <button class="tool-btn" onclick="processText('sentence')">Sentence Case</button>
+        </div>
     </div>
 
-    <div class="category-title">🔐 Kode & Sandi (Encode/Decode)</div>
-    <div class="button-grid">
-        <button onclick="convertText('base64Encode')">Base64 Encode</button>
-        <button onclick="convertText('base64Decode')">Base64 Decode</button>
-        <button onclick="convertText('binaryEncode')">Text to Binary</button>
-        <button onclick="convertText('binaryDecode')">Binary to Text</button>
-        <button onclick="convertText('morseEncode')">Text to Morse</button>
-        <button onclick="convertText('morseDecode')">Morse to Text</button>
+    <div class="category-container">
+        <div class="category-title">Keamanan & Kode</div>
+        <div class="button-grid">
+            <button class="tool-btn special-btn" onclick="processText('base64')">Base64 Encode/Decode</button>
+            <button class="tool-btn special-btn" onclick="processText('binary')">Binary Encode/Decode</button>
+            <button class="tool-btn special-btn" onclick="processText('caesar')">Caesar Cipher</button>
+            <button class="tool-btn special-btn" onclick="generatePass()">🔑 Gen Password</button>
+        </div>
     </div>
 
-    <div class="category-title">🛠️ Utilitas Ekstra</div>
-    <div class="button-grid">
-        <button class="btn-special" onclick="convertText('findReplace')">🔍 Cari & Ganti</button>
-        <button onclick="convertText('extractEmails')">📧 Ekstrak Email</button>
-        <button onclick="convertText('removeSpaces')">🧹 Hapus Spasi Ganda</button>
-        <button onclick="convertText('slugify')">🔗 Buat URL Slug</button>
-        <button onclick="speakText()">🔊 Dengarkan Teks</button>
+    <div class="category-container">
+        <div class="category-title">Utilitas & Konten</div>
+        <div class="button-grid">
+            <button class="tool-btn" onclick="processText('clean')">🧹 Bersihkan Spasi</button>
+            <button class="tool-btn" onclick="processText('slug')">🔗 URL Slug</button>
+            <button class="tool-btn" onclick="loremIpsum()">📝 Lorem Ipsum</button>
+            <button class="tool-btn" onclick="processText('extractEmails')">📧 Ambil Email</button>
+            <button class="tool-btn" onclick="speak()">🔊 Baca Teks</button>
+        </div>
     </div>
 
     <div class="action-buttons">
-        <button class="btn-copy" onclick="copyText()">📋 Salin Teks ke Clipboard</button>
-        <button class="btn-clear" onclick="clearText()">🗑️ Kosongkan</button>
+        <button class="btn-main btn-copy" onclick="copy()">📋 Salin Teks</button>
+        <button class="btn-main btn-download" onclick="downloadTxt()">💾 Simpan .txt</button>
+        <button class="btn-main btn-clear" onclick="clearAll()">🗑️ Hapus</button>
     </div>
 </div>
 
 <script>
-    const inputEl = document.getElementById('inputText');
-    const charCountEl = document.getElementById('charCount');
-    const wordCountEl = document.getElementById('wordCount');
-    const themeToggleBtn = document.getElementById('themeToggle');
+    const input = document.getElementById('inputText');
+    const themeBtn = document.getElementById('themeToggle');
 
-    // Dictionary untuk Sandi Morse
-    const morseDict = {
-        "A": ".-", "B": "-...", "C": "-.-.", "D": "-..", "E": ".", "F": "..-.", "G": "--.", "H": "....", "I": "..", "J": ".---", "K": "-.-", "L": ".-..", "M": "--", "N": "-.", "O": "---", "P": ".--.", "Q": "--.-", "R": ".-.", "S": "...", "T": "-", "U": "..-", "V": "...-", "W": ".--", "X": "-..-", "Y": "-.--", "Z": "--..",
-        "0": "-----", "1": ".----", "2": "..---", "3": "...--", "4": "....-", "5": ".....", "6": "-....", "7": "--...", "8": "---..", "9": "----.",
-        ".": ".-.-.-", ",": "--..--", "?": "..--..", " ": "/"
-    };
-    const reverseMorseDict = Object.fromEntries(Object.entries(morseDict).map(([k, v]) => [v, k]));
-
-    // Update stats in real-time
-    inputEl.addEventListener('input', () => {
-        const text = inputEl.value;
-        charCountEl.innerText = `Karakter: ${text.length}`;
-        const words = text.trim() === '' ? 0 : text.trim().split(/\s+/).length;
-        wordCountEl.innerText = `Kata: ${words}`;
+    // Stats Update
+    input.addEventListener('input', () => {
+        const val = input.value;
+        document.getElementById('charCount').innerText = `${val.length} Karakter`;
+        document.getElementById('wordCount').innerText = `${val.trim() ? val.trim().split(/\s+/).length : 0} Kata`;
+        document.getElementById('lineCount').innerText = `${val ? val.split(/\n/).length : 0} Baris`;
     });
 
-    // Theme Toggle Logic
+    // Theme Toggle
     function toggleTheme() {
-        const body = document.documentElement;
-        if (body.getAttribute('data-theme') === 'light') {
-            body.removeAttribute('data-theme');
-            themeToggleBtn.innerText = '☀️ Light Mode';
+        const root = document.documentElement;
+        if (root.getAttribute('data-theme') === 'light') {
+            root.removeAttribute('data-theme');
+            themeBtn.innerText = '☀️ Light';
         } else {
-            body.setAttribute('data-theme', 'light');
-            themeToggleBtn.innerText = '🌙 Dark Mode';
+            root.setAttribute('data-theme', 'light');
+            themeBtn.innerText = '🌙 Dark';
         }
     }
 
-    // Text to Speech
-    function speakText() {
-        const text = inputEl.value;
-        if (!text) return;
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(text);
+    // Logic Functions
+    function processText(type) {
+        let txt = input.value;
+        if (!txt && type !== 'caesar') return;
+
+        switch(type) {
+            case 'upper': txt = txt.toUpperCase(); break;
+            case 'lower': txt = txt.toLowerCase(); break;
+            case 'title': txt = txt.replace(/\w\S*/g, (w) => w.replace(/^\w/, (c) => c.toUpperCase())); break;
+            case 'sentence': txt = txt.toLowerCase().replace(/(^\s*\w|[.!?]\s*\w)/g, c => c.toUpperCase()); break;
+            case 'clean': txt = txt.replace(/\s+/g, ' ').trim(); break;
+            case 'slug': txt = txt.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''); break;
+            case 'base64': 
+                try { txt = (txt === btoa(atob(txt))) ? atob(txt) : btoa(txt); } 
+                catch(e) { txt = btoa(txt); } 
+                break;
+            case 'binary':
+                if (/^[01\s]+$/.test(txt)) {
+                    txt = txt.split(' ').map(bin => String.fromCharCode(parseInt(bin, 2))).join('');
+                } else {
+                    txt = txt.split('').map(char => char.charCodeAt(0).toString(2).padStart(8, '0')).join(' ');
+                }
+                break;
+            case 'caesar':
+                const shift = parseInt(prompt("Masukkan jumlah pergeseran (1-25):", "3")) || 0;
+                txt = txt.replace(/[a-z]/gi, (c) => {
+                    const start = c <= 'Z' ? 65 : 97;
+                    return String.fromCharCode(((c.charCodeAt(0) - start + shift) % 26) + start);
+                });
+                break;
+            case 'extractEmails':
+                const emails = txt.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/gi);
+                txt = emails ? [...new Set(emails)].join('\n') : "Tidak ditemukan email.";
+                break;
+        }
+        input.value = txt;
+        input.dispatchEvent(new Event('input'));
+    }
+
+    function generatePass() {
+        const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+";
+        let pass = "";
+        for (let i = 0; i < 16; i++) pass += chars.charAt(Math.floor(Math.random() * chars.length));
+        input.value = pass;
+        input.dispatchEvent(new Event('input'));
+    }
+
+    function loremIpsum() {
+        input.value = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.";
+        input.dispatchEvent(new Event('input'));
+    }
+
+    function downloadTxt() {
+        const blob = new Blob([input.value], { type: "text/plain" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "hasil-konversi.txt";
+        a.click();
+    }
+
+    function copy() {
+        input.select();
+        document.execCommand('copy');
+        const btn = document.querySelector('.btn-copy');
+        btn.innerText = "✅ Tersalin!";
+        setTimeout(() => btn.innerText = "📋 Salin Teks", 2000);
+    }
+
+    function clearAll() {
+        if(confirm("Hapus semua teks?")) {
+            input.value = "";
+            input.dispatchEvent(new Event('input'));
+        }
+    }
+
+    function speak() {
+        const utterance = new SpeechSynthesisUtterance(input.value);
         utterance.lang = 'id-ID';
         window.speechSynthesis.speak(utterance);
     }
 
-    // Main Conversion Logic
-    function convertText(type) {
-        let text = inputEl.value;
-        if (!text && type !== 'findReplace') return;
+    // PWA Logic
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        document.getElementById('installBtn').style.display = 'block';
+    });
 
-        switch(type) {
-            case 'upper':
-                text = text.toUpperCase();
-                break;
-            case 'lower':
-                text = text.toLowerCase();
-                break;
-            case 'title':
-                text = text.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-                break;
-            case 'sentence':
-                text = text.toLowerCase().replace(/(^\s*\w|[\.\!\?]\s*\w)/g, c => c.toUpperCase());
-                break;
-            case 'reverse':
-                text = text.split('').reverse().join('');
-                break;
-            case 'base64Encode':
-                try { text = btoa(text); } catch(e) { alert("Hindari karakter khusus non-latin untuk Base64."); }
-                break;
-            case 'base64Decode':
-                try { text = atob(text); } catch(e) { alert("Format Base64 tidak valid."); }
-                break;
-            case 'binaryEncode':
-                text = text.split('').map(char => char.charCodeAt(0).toString(2).padStart(8, '0')).join(' ');
-                break;
-            case 'binaryDecode':
-                try {
-                    const binaryArr = text.trim().split(/\s+/);
-                    text = binaryArr.map(bin => {
-                        if(!/^[01]+$/.test(bin)) throw new Error();
-                        return String.fromCharCode(parseInt(bin, 2));
-                    }).join('');
-                } catch(e) { 
-                    alert("Format biner tidak valid."); 
-                }
-                break;
-            case 'morseEncode':
-                text = text.toUpperCase().split('').map(c => morseDict[c] || c).join(' ');
-                break;
-            case 'morseDecode':
-                // Memisahkan berdasarkan spasi, ubah '/' kembali jadi spasi
-                text = text.trim().split(' ').map(m => reverseMorseDict[m] || m).join('').replace(/\//g, ' ');
-                text = text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
-                break;
-            case 'removeSpaces':
-                text = text.replace(/\s+/g, ' ').trim();
-                break;
-            case 'slugify':
-                text = text.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-');
-                break;
-            case 'findReplace':
-                const findStr = prompt("Masukkan kata/kalimat yang ingin dicari:");
-                if (findStr) {
-                    const replaceStr = prompt(`Ganti kata "${findStr}" dengan:`);
-                    if (replaceStr !== null) {
-                        text = text.split(findStr).join(replaceStr);
-                    }
-                }
-                break;
-            case 'extractEmails':
-                const emailRegex = /([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/gi;
-                const foundEmails = text.match(emailRegex);
-                if (foundEmails) {
-                    // Hapus duplikat dan gabungkan dengan enter
-                    text = [...new Set(foundEmails)].join('\n');
-                } else {
-                    alert("Tidak ada alamat email yang ditemukan di dalam teks.");
-                }
-                break;
+    async function installPWA() {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            if (outcome === 'accepted') document.getElementById('installBtn').style.display = 'none';
+            deferredPrompt = null;
         }
-        
-        inputEl.value = text;
-        inputEl.dispatchEvent(new Event('input')); // trigger stat update
-    }
-
-    // Copy to Clipboard
-    function copyText() {
-        if (!inputEl.value) return;
-        inputEl.select();
-        document.execCommand('copy');
-        
-        const btn = document.querySelector('.btn-copy');
-        const originalText = btn.innerHTML;
-        btn.innerHTML = '✅ Tersalin!';
-        setTimeout(() => btn.innerHTML = originalText, 2000);
-    }
-
-    // Clear Textarea
-    function clearText() {
-        inputEl.value = '';
-        inputEl.dispatchEvent(new Event('input'));
-        window.speechSynthesis.cancel();
     }
 </script>
 
