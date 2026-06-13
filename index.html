@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Text Converter Pro</title>
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <title>Text Converter Pro v9.2 - Polished Edition</title>
     <meta name="theme-color" content="#0f172a">
     
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
@@ -221,7 +220,7 @@
 
 <div class="container">
     <div class="header-wrap">
-        <h1>Text Converter <span style="font-size: 1rem; color: var(--text-muted); font-weight: 500;">v9.1</span></h1>
+        <h1>Text Converter <span style="font-size: 1rem; color: var(--text-muted); font-weight: 500;">v9.2</span></h1>
         <button class="icon-btn" onclick="toggleTheme()" id="themeToggle">☀️ Light Mode</button>
     </div>
     
@@ -241,8 +240,8 @@
         <div class="category-title">🤖 AI, Suara & Terjemahan</div>
         <div class="button-grid">
             <button class="tool-btn ocr-btn" id="btnOCR" onclick="document.getElementById('imageInput').click()">📷 Ekstrak dari Foto</button>
-            <button class="tool-btn special-btn" id="btnTransIDEN" onclick="translateText('id|en')">🇮🇩 ➔ 🇬🇧 Translate</button>
-            <button class="tool-btn special-btn" id="btnTransENID" onclick="translateText('en|id')">🇬🇧 ➔ 🇮🇩 Translate</button>
+            <button class="tool-btn special-btn" id="btnTransIDEN" onclick="translateText('id|en')">ID ➔ EN Translate</button>
+            <button class="tool-btn special-btn" id="btnTransENID" onclick="translateText('en|id')">EN ➔ ID Translate</button>
             <button class="tool-btn" onclick="speakText()">🔊 Dengarkan Teks</button>
         </div>
     </div>
@@ -264,6 +263,7 @@
             <button class="tool-btn" onclick="processText('lower')">lowercase</button>
             <button class="tool-btn" onclick="processText('title')">Title Case</button>
             <button class="tool-btn" onclick="processText('clean')">🧹 Rapikan Spasi</button>
+            <button class="tool-btn" onclick="processText('removeSymbols')">🚫 Hapus Simbol</button>
         </div>
     </div>
 
@@ -280,7 +280,7 @@
     const saveIndicator = document.getElementById('saveIndicator');
     let saveTimeout;
 
-    // --- FITUR BARU: Auto-Save Recovery ---
+    // Auto-Save Recovery
     window.onload = () => {
         const savedText = localStorage.getItem('textConverterDraft');
         if (savedText) {
@@ -293,7 +293,6 @@
     input.addEventListener('input', () => {
         updateStats();
         
-        // Simpan ke local storage dengan debounce agar tidak memberatkan browser
         clearTimeout(saveTimeout);
         saveTimeout = setTimeout(() => {
             localStorage.setItem('textConverterDraft', input.value);
@@ -329,7 +328,7 @@
         window.speechSynthesis.speak(utterance);
     }
 
-    // --- BUG FIX: Export to PDF (Multi-page Support) ---
+    // Export to PDF (Multi-page Support)
     function exportToPDF() {
         const text = input.value.trim();
         if (!text) {
@@ -347,12 +346,12 @@
         let yPos = 20;
         
         for (let i = 0; i < splitText.length; i++) {
-            if (yPos > 280) { // Jika melewati batas bawah kertas (A4 tinggi 297mm)
+            if (yPos > 280) { 
                 doc.addPage();
-                yPos = 20; // Reset ke atas
+                yPos = 20; 
             }
             doc.text(splitText[i], 15, yPos);
-            yPos += 7; // Jarak antar baris
+            yPos += 7; 
         }
         
         doc.save("TextConverterPro.pdf");
@@ -382,7 +381,7 @@
             } 
         }).then(({ data: { text } }) => {
             input.value = input.value ? input.value + '\n\n' + text : text;
-            input.dispatchEvent(new Event('input')); // Memicu auto-save & stats
+            input.dispatchEvent(new Event('input')); 
             btnOCR.innerText = "✅ Berhasil!";
             setTimeout(() => {
                 btnOCR.innerText = "📷 Ekstrak dari Foto";
@@ -419,7 +418,7 @@
             const data = await response.json();
             if(data.responseData && data.responseData.translatedText) {
                 input.value = data.responseData.translatedText;
-                input.dispatchEvent(new Event('input')); // Memicu auto-save
+                input.dispatchEvent(new Event('input')); 
             } else {
                 alert("Gagal mendapatkan terjemahan.");
             }
@@ -441,6 +440,10 @@
                 case 'lower': txt = txt.toLowerCase(); break;
                 case 'title': txt = txt.replace(/\w\S*/g, (w) => w.replace(/^\w/, (c) => c.toUpperCase())); break;
                 case 'clean': txt = txt.replace(/\s+/g, ' ').trim(); break;
+                case 'removeSymbols': 
+                    // Menghapus segala sesuatu kecuali huruf (semua bahasa), angka, dan spasi
+                    txt = txt.replace(/[^\p{L}\p{N}\s]/gu, ''); 
+                    break;
                 
                 case 'extLinks':
                     const links = txt.match(/https?:\/\/[^\s]+/gi);
@@ -460,13 +463,13 @@
                     break;
             }
             input.value = txt;
-            input.dispatchEvent(new Event('input')); // Memicu auto-save
+            input.dispatchEvent(new Event('input')); 
         } catch (e) {
             alert("Terjadi kesalahan sistem.");
         }
     }
 
-    // --- BUG FIX: Salin Teks menggunakan Clipboard API ---
+    // Salin Teks
     async function copyText() {
         const textToCopy = input.value;
         if (!textToCopy) return;
@@ -477,7 +480,6 @@
             await navigator.clipboard.writeText(textToCopy);
             btn.innerHTML = "✅ Tersalin!";
         } catch (err) {
-            // Fallback jika API Clipboard terblokir (misal di beberapa browser lawas)
             input.select();
             document.execCommand('copy');
             btn.innerHTML = "✅ Tersalin!";
@@ -489,7 +491,7 @@
     function clearAll() {
         if(confirm("Apakah Anda yakin ingin menghapus semua teks?")) {
             input.value = "";
-            localStorage.removeItem('textConverterDraft'); // Hapus draft
+            localStorage.removeItem('textConverterDraft'); 
             updateStats();
             window.speechSynthesis.cancel();
         }
