@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Modern Text Converter v3.0</title>
+    <title>Modern Text Converter v4.0</title>
     <style>
         :root {
             /* Tema Gelap (Default) */
@@ -15,6 +15,7 @@
             --accent-hover: #2563eb;
             --border-color: #334155;
             --btn-bg: #1e293b;
+            --btn-special: #4f46e5;
         }
 
         [data-theme="light"] {
@@ -27,6 +28,7 @@
             --accent-hover: #2563eb;
             --border-color: #cbd5e1;
             --btn-bg: #f8fafc;
+            --btn-special: #6366f1;
         }
 
         body {
@@ -46,7 +48,7 @@
         .container {
             background-color: var(--container-bg);
             width: 100%;
-            max-width: 800px;
+            max-width: 850px;
             padding: 30px;
             border-radius: 16px;
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
@@ -89,7 +91,7 @@
 
         textarea {
             width: 100%;
-            height: 180px;
+            height: 200px;
             background-color: var(--bg-color);
             color: var(--text-main);
             border: 1px solid var(--border-color);
@@ -128,7 +130,7 @@
 
         .button-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
             gap: 10px;
         }
 
@@ -154,6 +156,16 @@
         button:active {
             transform: translateY(0);
         }
+        
+        .btn-special {
+            background-color: rgba(99, 102, 241, 0.1);
+            color: var(--btn-special);
+            border-color: var(--btn-special);
+        }
+        .btn-special:hover {
+            background-color: var(--btn-special);
+            color: white;
+        }
 
         .action-buttons {
             display: flex;
@@ -175,7 +187,7 @@
 
 <div class="container">
     <div class="header-wrap">
-        <h1>Text Converter Pro <span style="font-size: 1rem; color: var(--text-muted);">- v3.0</span></h1>
+        <h1>Text Converter Pro <span style="font-size: 1rem; color: var(--text-muted);">- v4.0 Ultimate</span></h1>
         <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">☀️ Light Mode</button>
     </div>
     
@@ -186,7 +198,7 @@
         <span id="wordCount">Kata: 0</span>
     </div>
 
-    <div class="category-title">📝 Ubah Huruf (Case Conversion)</div>
+    <div class="category-title">📝 Ubah Huruf (Case)</div>
     <div class="button-grid">
         <button onclick="convertText('upper')">UPPERCASE</button>
         <button onclick="convertText('lower')">lowercase</button>
@@ -195,16 +207,20 @@
         <button onclick="convertText('reverse')">esreveR</button>
     </div>
 
-    <div class="category-title">🔐 Encode & Decode</div>
+    <div class="category-title">🔐 Kode & Sandi (Encode/Decode)</div>
     <div class="button-grid">
         <button onclick="convertText('base64Encode')">Base64 Encode</button>
         <button onclick="convertText('base64Decode')">Base64 Decode</button>
         <button onclick="convertText('binaryEncode')">Text to Binary</button>
         <button onclick="convertText('binaryDecode')">Binary to Text</button>
+        <button onclick="convertText('morseEncode')">Text to Morse</button>
+        <button onclick="convertText('morseDecode')">Morse to Text</button>
     </div>
 
     <div class="category-title">🛠️ Utilitas Ekstra</div>
     <div class="button-grid">
+        <button class="btn-special" onclick="convertText('findReplace')">🔍 Cari & Ganti</button>
+        <button onclick="convertText('extractEmails')">📧 Ekstrak Email</button>
         <button onclick="convertText('removeSpaces')">🧹 Hapus Spasi Ganda</button>
         <button onclick="convertText('slugify')">🔗 Buat URL Slug</button>
         <button onclick="speakText()">🔊 Dengarkan Teks</button>
@@ -221,6 +237,14 @@
     const charCountEl = document.getElementById('charCount');
     const wordCountEl = document.getElementById('wordCount');
     const themeToggleBtn = document.getElementById('themeToggle');
+
+    // Dictionary untuk Sandi Morse
+    const morseDict = {
+        "A": ".-", "B": "-...", "C": "-.-.", "D": "-..", "E": ".", "F": "..-.", "G": "--.", "H": "....", "I": "..", "J": ".---", "K": "-.-", "L": ".-..", "M": "--", "N": "-.", "O": "---", "P": ".--.", "Q": "--.-", "R": ".-.", "S": "...", "T": "-", "U": "..-", "V": "...-", "W": ".--", "X": "-..-", "Y": "-.--", "Z": "--..",
+        "0": "-----", "1": ".----", "2": "..---", "3": "...--", "4": "....-", "5": ".....", "6": "-....", "7": "--...", "8": "---..", "9": "----.",
+        ".": ".-.-.-", ",": "--..--", "?": "..--..", " ": "/"
+    };
+    const reverseMorseDict = Object.fromEntries(Object.entries(morseDict).map(([k, v]) => [v, k]));
 
     // Update stats in real-time
     inputEl.addEventListener('input', () => {
@@ -246,17 +270,16 @@
     function speakText() {
         const text = inputEl.value;
         if (!text) return;
-        
-        window.speechSynthesis.cancel(); // Stop any ongoing speech
+        window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'id-ID'; // Set bahasa Indonesia
+        utterance.lang = 'id-ID';
         window.speechSynthesis.speak(utterance);
     }
 
-    // Text Conversion Logic
+    // Main Conversion Logic
     function convertText(type) {
         let text = inputEl.value;
-        if (!text) return;
+        if (!text && type !== 'findReplace') return;
 
         switch(type) {
             case 'upper':
@@ -294,11 +317,38 @@
                     alert("Format biner tidak valid."); 
                 }
                 break;
+            case 'morseEncode':
+                text = text.toUpperCase().split('').map(c => morseDict[c] || c).join(' ');
+                break;
+            case 'morseDecode':
+                // Memisahkan berdasarkan spasi, ubah '/' kembali jadi spasi
+                text = text.trim().split(' ').map(m => reverseMorseDict[m] || m).join('').replace(/\//g, ' ');
+                text = text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+                break;
             case 'removeSpaces':
                 text = text.replace(/\s+/g, ' ').trim();
                 break;
             case 'slugify':
                 text = text.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-');
+                break;
+            case 'findReplace':
+                const findStr = prompt("Masukkan kata/kalimat yang ingin dicari:");
+                if (findStr) {
+                    const replaceStr = prompt(`Ganti kata "${findStr}" dengan:`);
+                    if (replaceStr !== null) {
+                        text = text.split(findStr).join(replaceStr);
+                    }
+                }
+                break;
+            case 'extractEmails':
+                const emailRegex = /([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/gi;
+                const foundEmails = text.match(emailRegex);
+                if (foundEmails) {
+                    // Hapus duplikat dan gabungkan dengan enter
+                    text = [...new Set(foundEmails)].join('\n');
+                } else {
+                    alert("Tidak ada alamat email yang ditemukan di dalam teks.");
+                }
                 break;
         }
         
@@ -322,7 +372,7 @@
     function clearText() {
         inputEl.value = '';
         inputEl.dispatchEvent(new Event('input'));
-        window.speechSynthesis.cancel(); // Matikan suara jika sedang bicara
+        window.speechSynthesis.cancel();
     }
 </script>
 
